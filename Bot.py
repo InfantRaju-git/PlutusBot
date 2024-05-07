@@ -12,7 +12,7 @@ def run_trade_bot(symbol):
     end_time = datetime.time(15, 30)
 
     # Define the 4-hour sequence for get_trend
-    trend_times = [datetime.time(9, 15, 10), datetime.time(13, 15, 10)] #to change
+    trend_times = [datetime.time(9, 15, 7), datetime.time(13, 15, 7)] #to change
 
     # Schedule get_trend method to run on the 4-hour sequence
     for trend_time in trend_times:
@@ -22,7 +22,7 @@ def run_trade_bot(symbol):
     # Schedule get_ohlc_data method to run every time_frame minutes between 9:15:30 AM and 3:30 PM
     for hour in range(start_time.hour, end_time.hour + 1):
         for minute in range(start_time.minute, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
-            schedule_time = datetime.time(hour, minute, 10)
+            schedule_time = datetime.time(hour, minute, 12)
             if start_time <= schedule_time < end_time:
                 print("Scheduling Trade Job", schedule_time)
                 schedule.every().day.at(schedule_time.strftime("%H:%M:%S")).do(BotMethods.get_ohlc_data, symbol=symbol, isOptionChart=True).tag('ohlc')
