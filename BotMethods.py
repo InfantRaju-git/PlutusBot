@@ -91,7 +91,7 @@ def get_ohlc_data(symbol,isOptionChart):
             optionName = create_option_symbol(symbol, optionType, strikePrice)
             Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] = optionName
             url = 'https://groww.in/v1/api/stocks_fo_data/v3/charting_service/chart/exchange/NSE/segment/FNO/'+optionName
-            timeframe = int(Global.TRADE_TF)
+            timeframe = int(Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"])
         else:
             url = 'https://groww.in/v1/api/charting_service/v4/chart/exchange/NSE/segment/CASH/'+symbol
             timeframe = 240
@@ -111,13 +111,13 @@ def get_ohlc_data(symbol,isOptionChart):
             json_data = response.json()
             df = pd.DataFrame(json_data)
         
-        # Drop unwanted columns
+        # Drop unwanted columns and Rename the columns to the desired format
         df.drop(['changeValue', 'changePerc', 'closingPrice', 'startTimeEpochInMillis'], axis=1, inplace=True)
-        ohlc = df['candles'].apply(pd.Series)
-        
-        # Rename the columns to the desired format
+        ohlc = df['candles'].apply(pd.Series)        
         ohlc.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         ohlc.drop(['volume'], axis=1, inplace=True)
+
+        del response, json_data, df
         
         if isOptionChart:
             psar = PSARIndicator(ohlc['high'], ohlc['low'], ohlc['close'], step=0.2) # Calculate PSAR values
@@ -128,7 +128,7 @@ def get_ohlc_data(symbol,isOptionChart):
             ohlc_open = ohlc.iloc[last_index]['open']
             ohlc_psar = ohlc.iloc[last_index]['psar']
 
-            del ohlc
+            del ohlc, psar
 
             if ohlc_close > ohlc_psar and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
@@ -139,9 +139,11 @@ def get_ohlc_data(symbol,isOptionChart):
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 send_telegram_message("Exit: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] + " : "  +ohlc_close +" PL: "+ ohlc_close-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"])
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
-    
+        else:
+            return ohlc
+        
     except Exception as e:
-        raise BotException("Error in get_ohlc_data: "+e)
+        raise BotException("Error in get_ohlc_data: "+str(e))
 
 
 def get_trend(symbol):
@@ -168,4 +170,4 @@ def get_trend(symbol):
             send_telegram_message(""+symbol+" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
 
     except Exception as e:
-            raise BotException("Error in get_trend: "+e)
+            raise BotException("Error in get_trend: "+str(e))

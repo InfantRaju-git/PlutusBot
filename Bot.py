@@ -22,7 +22,7 @@ def run_trade_bot(symbol):
     # Schedule get_ohlc_data method to run every time_frame minutes between 9:15:30 AM and 3:30 PM
     for hour in range(start_time.hour, end_time.hour + 1):
         for minute in range(start_time.minute, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
-            schedule_time = datetime.time(hour, minute, 15)
+            schedule_time = datetime.time(hour, minute, 10)
             if start_time <= schedule_time < end_time:
                 print("Scheduling Trade Job", schedule_time)
                 schedule.every().day.at(schedule_time.strftime("%H:%M:%S")).do(BotMethods.get_ohlc_data, symbol=symbol, isOptionChart=True).tag('ohlc')
