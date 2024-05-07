@@ -66,6 +66,8 @@ def get_atm_strike(symbol, current_price, current_trend):
         rounded_strike = (current_price // increment) * increment
     elif current_trend == "PE":
         rounded_strike = ((current_price + increment - 1) // increment) * increment
+    elif current_trend is None:
+        rounded_strike = 0
     else:
         raise BotException("Invalid current_trend value in get_atm_strike")
 
@@ -84,10 +86,10 @@ def get_ohlc_data(symbol,isOptionChart):
         start_time_in_millis = int(start_time.timestamp() * 1000)
         
         if isOptionChart:
-            optionType = Global.CURR_TREND
-            strikePrice = get_atm_strike(symbol, Global.CURR_CLOSE, Global.CURR_TREND)
+            optionType = Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"]
+            strikePrice = get_atm_strike(symbol, Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"], optionType)
             optionName = create_option_symbol(symbol, optionType, strikePrice)
-            Global.OPTION_NAME = optionName
+            Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] = optionName
             url = 'https://groww.in/v1/api/stocks_fo_data/v3/charting_service/chart/exchange/NSE/segment/FNO/'+optionName
             timeframe = int(Global.TRADE_TF)
         else:
@@ -100,7 +102,10 @@ def get_ohlc_data(symbol,isOptionChart):
             'startTimeInMillis': str(start_time_in_millis),
         }
         
-        response = requests.get(url, params=params)
+        if Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] is not None and isOptionChart:
+            response = requests.get(url, params=params)
+        elif (isOptionChart == False):
+            response = requests.get(url, params=params)
         
         if response.status_code == 200:
             json_data = response.json()
@@ -125,15 +130,15 @@ def get_ohlc_data(symbol,isOptionChart):
 
             del ohlc
 
-            if ohlc_close > ohlc_psar and Global.OPEN_POSITION == False:
-                Global.OPEN_POSITION = True
-                Global.ENTRY_PRICE = ohlc_close
-                send_telegram_message(f"Entry: {Global.OPTION_NAME}: {ohlc_close}")
+            if ohlc_close > ohlc_psar and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
+                Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
+                send_telegram_message("Entry: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] + " : " +ohlc_close)
     
-            elif (ohlc_close < ohlc_psar or ohlc_close < ohlc_open) and Global.OPEN_POSITION == True:
-                Global.OPEN_POSITION = False
-                send_telegram_message(f"Exit: {Global.OPTION_NAME}: {ohlc_close} PL: {ohlc_close-Global.ENTRY_PRICE}")
-                Global.ENTRY_PRICE = None
+            elif (ohlc_close < ohlc_psar or ohlc_close < ohlc_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
+                Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
+                send_telegram_message("Exit: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] + " : "  +ohlc_close +" PL: "+ ohlc_close-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"])
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
     
     except Exception as e:
         raise BotException("Error in get_ohlc_data: "+e)
@@ -148,19 +153,19 @@ def get_trend(symbol):
         last_index = len(ohlc_data)-1
         current_ema_9 = ohlc_data.iloc[last_index]['EMA_9']
         current_close = ohlc_data.iloc[last_index]['close']
-        Global.CURR_CLOSE = int(current_close)
+        Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"] = int(current_close)
         
         del ohlc_data
         
         if current_close > current_ema_9 and abs(current_close - current_ema_9) >= gap_ema_close:
-            Global.CURR_TREND = "CE"
-            send_telegram_message(f"{symbol} Trend: {Global.CURR_TREND}")
-
+            Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = "CE"
+            send_telegram_message(""+symbol +" Trend: "+ Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
         elif current_close < current_ema_9 and abs(current_close - current_ema_9) >= gap_ema_close:
-            Global.CURR_TREND = "PE"
-            send_telegram_message(f"{symbol} Trend: {Global.CURR_TREND}")
+            Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = "PE"
+            send_telegram_message(""+symbol +" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
+        else:
+            Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = None
+            send_telegram_message(""+symbol+" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
 
-        # else continue previous trend
-        
     except Exception as e:
             raise BotException("Error in get_trend: "+e)
