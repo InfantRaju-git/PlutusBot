@@ -7,7 +7,7 @@ TELEGRAM_CHATID = "1000631227"
 
 SYMBOL_SETTINGS = {
     "NIFTY": {
-        "TRADE_TF": 60,
+        "TRADE_TF": 15,
         "CURR_TREND": None,
         "CURR_CLOSE": None,
         "OPEN_POSITION": False,
@@ -15,7 +15,7 @@ SYMBOL_SETTINGS = {
         "OPTION_NAME": None
     },
     "BANKNIFTY": {
-        "TRADE_TF": 60,
+        "TRADE_TF": 15,
         "CURR_TREND": None,
         "CURR_CLOSE": None,
         "OPEN_POSITION": False,
