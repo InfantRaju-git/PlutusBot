@@ -133,11 +133,11 @@ def get_ohlc_data(symbol,isOptionChart):
             if ohlc_close > ohlc_psar and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
-                send_telegram_message("Entry: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] + " : " +ohlc_close)
+                send_telegram_message("Entry: "+optionName+ " : " +str(ohlc_close))
     
             elif (ohlc_close < ohlc_psar or ohlc_close < ohlc_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
-                send_telegram_message("Exit: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] + " : "  +ohlc_close +" PL: "+ ohlc_close-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"])
+                send_telegram_message("Exit: "+optionName+ " : "  +str(ohlc_close)+" PL: "+ str(ohlc_close-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
         else:
             return ohlc
