@@ -3,9 +3,10 @@ import time
 import schedule
 import BotMethods
 import Global
+import sys
 
 def run_trade_bot(symbol):
-    print("Running trade bot...")
+    print("Running trade bot on: "+ symbol)
 
     # Define the trading hours
     start_time = datetime.time(9, 15)
@@ -27,14 +28,14 @@ def run_trade_bot(symbol):
                 print("Scheduling Trade Job", schedule_time)
                 schedule.every().day.at(schedule_time.strftime("%H:%M:%S")).do(BotMethods.get_ohlc_data, symbol=symbol, isOptionChart=True).tag('ohlc')
 
+    schedule.every().day.at(datetime.time(15, 28, 30).strftime("%H:%M:%S")).do(BotMethods.exit_open_trade, symbol=symbol).tag('exittrade')
+    
     while True:
         schedule.run_pending()
         time.sleep(1)  # Delay to avoid consuming too many resources
 
-def main():
-    symbols = ["NIFTY"]
-    for symbol in symbols:
-        run_trade_bot(symbol)
+def main(symbol):
+    run_trade_bot(symbol)
 
 if __name__ == "__main__":
-    main()
+    main(str(sys.argv[1]))

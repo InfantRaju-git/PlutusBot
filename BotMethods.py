@@ -102,8 +102,11 @@ def get_ohlc_data(symbol,isOptionChart):
             'startTimeInMillis': str(start_time_in_millis),
         }
         
-        if Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] is not None and isOptionChart:
-            response = requests.get(url, params=params)
+        if isOptionChart:
+            if(Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] == None):
+                return
+            else:
+                response = requests.get(url, params=params)
         elif (isOptionChart == False):
             response = requests.get(url, params=params)
         
@@ -124,9 +127,10 @@ def get_ohlc_data(symbol,isOptionChart):
             ohlc['psar'] = psar.psar()
 
             last_index = len(ohlc)-1
-            ohlc_close = ohlc.iloc[last_index]['close']
             ohlc_open = ohlc.iloc[last_index]['open']
             ohlc_psar = ohlc.iloc[last_index]['psar']
+            prev_close = ohlc.iloc[last_index-1]['close']
+            prev_open = ohlc.iloc[last_index-1]['open']
 
             del ohlc, psar
 
@@ -135,7 +139,8 @@ def get_ohlc_data(symbol,isOptionChart):
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
                 send_telegram_message("Entry: "+optionName+ " : " +str(ohlc_open))
     
-            elif (ohlc_open < ohlc_psar or ohlc_close < ohlc_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
+            #elif (ohlc_open < ohlc_psar or ohlc_close < ohlc_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
+            elif (ohlc_open < ohlc_psar or prev_close < prev_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 send_telegram_message("Exit: "+optionName+ " : "  +str(ohlc_open)+" PL: "+ str(ohlc_open-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
@@ -155,19 +160,46 @@ def get_trend(symbol):
         last_index = len(ohlc_data)-1
         current_ema_9 = ohlc_data.iloc[last_index]['EMA_9']
         current_close = ohlc_data.iloc[last_index]['close']
-        Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"] = int(current_close)
         
         del ohlc_data
         
-        if current_close > current_ema_9 and abs(current_close - current_ema_9) >= gap_ema_close:
+        if current_close > current_ema_9 and abs(current_close - current_ema_9) >= gap_ema_close: #CE Trend
+            
+            if(Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] == "PE" and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True): #Open trade in opposite dir
+                Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
+                send_telegram_message("Exit Trend Change: "  +str(current_close)+" PL: "+ str(current_close-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
+            
+            if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False):
+                Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"] = int(current_close)
+
             Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = "CE"
-            send_telegram_message(""+symbol +" Trend: "+ Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
-        elif current_close < current_ema_9 and abs(current_close - current_ema_9) >= gap_ema_close:
+            send_telegram_message(symbol +" Trend: "+ Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
+
+
+        elif current_close < current_ema_9 and abs(current_close - current_ema_9) >= gap_ema_close: #PE Trend
+            
+            if(Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] == "CE" and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True): #Open trade in opposite dir
+                Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
+                send_telegram_message("Exit Trend Change: "  +str(current_close)+" PL: "+ str(current_close-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
+            
+            if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False):
+                Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"] = int(current_close)
+            
             Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = "PE"
-            send_telegram_message(""+symbol +" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
+            send_telegram_message(symbol +" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
+        
         else:
             Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = None
-            send_telegram_message(""+symbol+" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
+            send_telegram_message(""+symbol+" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"]+" No Trade")
 
     except Exception as e:
             raise BotException("Error in get_trend: "+str(e))
+    
+def exit_open_trade(symbol):
+    if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True):
+        Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
+        send_telegram_message("Exit EOD")
+        Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
+
