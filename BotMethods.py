@@ -1,13 +1,11 @@
 from datetime import datetime as dt
 import datetime
-from dateutil.relativedelta import relativedelta
 from dateutil.rrule import rrule, WEEKLY
 import requests
 import pandas as pd
-import numpy as np
 import time
-import pytz
 import Global
+import DhanMethods
 from ta.trend import PSARIndicator
 
 def BotException(exceptionMessage):
@@ -87,9 +85,8 @@ def get_ohlc_data(symbol,isOptionChart):
         
         if isOptionChart:
             optionType = Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"]
-            strikePrice = get_atm_strike(symbol, Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"], optionType)
+            strikePrice = Global.SYMBOL_SETTINGS[symbol]["STRIKE"]
             optionName = create_option_symbol(symbol, optionType, strikePrice)
-            Global.SYMBOL_SETTINGS[symbol]["OPTION_NAME"] = optionName
             url = 'https://groww.in/v1/api/stocks_fo_data/v3/charting_service/chart/exchange/NSE/segment/FNO/'+optionName
             timeframe = int(Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"])
         else:
@@ -172,6 +169,8 @@ def get_trend(symbol):
             
             if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False):
                 Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"] = int(current_close)
+                Global.SYMBOL_SETTINGS[symbol]["STRIKE"] = get_atm_strike(symbol, int(current_close), "CE")
+                Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = DhanMethods.find_matching_security_ids(Global.SYMBOL_SETTINGS[symbol]["STRIKE"], "CE", symbol)
 
             Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = "CE"
             send_telegram_message(symbol +" Trend: "+ Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])
@@ -186,6 +185,8 @@ def get_trend(symbol):
             
             if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False):
                 Global.SYMBOL_SETTINGS[symbol]["CURR_CLOSE"] = int(current_close)
+                Global.SYMBOL_SETTINGS[symbol]["STRIKE"] = get_atm_strike(symbol, int(current_close), "PE")
+                Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = DhanMethods.find_matching_security_ids(Global.SYMBOL_SETTINGS[symbol]["STRIKE"], "CE", symbol)
             
             Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"] = "PE"
             send_telegram_message(symbol +" Trend: "+Global.SYMBOL_SETTINGS[symbol]["CURR_TREND"])

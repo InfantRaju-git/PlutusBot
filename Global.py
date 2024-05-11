@@ -10,16 +10,18 @@ SYMBOL_SETTINGS = {
         "TRADE_TF": 10,
         "CURR_TREND": None,
         "CURR_CLOSE": None,
+        "CURR_SECURITYID" : None,
+        "STRIKE": None,
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None, #only for tele message
-        "OPTION_NAME": None
+        "ENTRY_PRICE": None #only for tele message
     },
     "BANKNIFTY": {
-        "TRADE_TF": 10,
+        "TRADE_TF": 15,
         "CURR_TREND": None,
         "CURR_CLOSE": None,
+        "CURR_SECURITYID" : None,
+        "STRIKE": None,
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None, #only for tele message
-        "OPTION_NAME": None
+        "ENTRY_PRICE": None #only for tele message
     }
 }
