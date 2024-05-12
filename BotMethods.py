@@ -120,24 +120,28 @@ def get_ohlc_data(symbol,isOptionChart):
         del response, json_data, df
         
         if isOptionChart:
-            psar = PSARIndicator(ohlc['high'], ohlc['low'], ohlc['close'], step=0.2) # Calculate PSAR values
-            ohlc['psar'] = psar.psar()
+            ohlc['HA_Close'] = (ohlc['open'] + ohlc['high'] + ohlc['low'] + ohlc['close']) / 4
+            ha_open = ohlc['HA_Close'].shift(1)
+            ohlc['HA_Open'] = ha_open.values[0]
+            ohlc.loc[1:, 'HA_Open'] = ha_open.values[1:]
+            ohlc['HA_High'] = ohlc[['HA_Open', 'HA_Close', 'high']].max(axis=1)
+            ohlc['HA_Low'] = ohlc[['HA_Open', 'HA_Close', 'low']].min(axis=1)
 
             last_index = len(ohlc)-1
+            curr_close = ohlc.iloc[last_index]['HA_Close']
+            curr_open = ohlc.iloc[last_index]['HA_Open']
             ohlc_open = ohlc.iloc[last_index]['open']
-            ohlc_psar = ohlc.iloc[last_index]['psar']
-            prev_close = ohlc.iloc[last_index-1]['close']
-            prev_open = ohlc.iloc[last_index-1]['open']
+            prev_close = ohlc.iloc[last_index-1]['HA_Close']
+            prev_open = ohlc.iloc[last_index-1]['HA_Open']        
 
-            del ohlc, psar
+            del ohlc
 
-            if ohlc_open > ohlc_psar and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
+            if curr_close >= curr_open and prev_close >= prev_open and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
                 send_telegram_message("Entry: "+optionName+ " : " +str(ohlc_open))
     
-            #elif (ohlc_open < ohlc_psar or ohlc_close < ohlc_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
-            elif (ohlc_open < ohlc_psar or prev_close < prev_open) and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
+            elif curr_close < curr_open and prev_close < prev_open and Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 send_telegram_message("Exit: "+optionName+ " : "  +str(ohlc_open)+" PL: "+ str(ohlc_open-Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
