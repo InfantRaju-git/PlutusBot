@@ -8,20 +8,16 @@ TELEGRAM_CHATID = "1000631227"
 SYMBOL_SETTINGS = {
     "NIFTY": {
         "TRADE_TF": 10,
-        "CURR_TREND": None,
-        "CURR_CLOSE": None,
+        "POSITION_TYPE": None,
         "CURR_SECURITYID" : None,
-        "STRIKE": None,
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None #only for tele message
+        "ENTRY_PRICE": None 
     },
     "BANKNIFTY": {
         "TRADE_TF": 15,
-        "CURR_TREND": None,
-        "CURR_CLOSE": None,
+        "POSITION_TYPE": None,
         "CURR_SECURITYID" : None,
-        "STRIKE": None,
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None #only for tele message
+        "ENTRY_PRICE": None 
     }
 }

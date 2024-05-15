@@ -35,9 +35,9 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
     return closest_expiry["SEM_SMST_SECURITY_ID"]
 
 
-def filter_and_save_csv(url, output_file):
+def filter_and_save_csv():
     try:
-        df = pd.read_csv(url)
+        df = pd.read_csv(CSV_URL)
     except Exception as e:
         print("Error reading CSV:", e)
         return
@@ -45,7 +45,7 @@ def filter_and_save_csv(url, output_file):
     df_filtered = df[df['SEM_INSTRUMENT_NAME'] == 'OPTIDX']
     
     try:
-        df_filtered.to_csv(output_file, index=False)
+        df_filtered.to_csv(OUTPUT_FILE, index=False)
         print("Filtered CSV saved successfully.")
     except Exception as e:
         print("Error saving filtered CSV:", e)
