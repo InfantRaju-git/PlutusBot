@@ -25,12 +25,12 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
         gc.collect()
 
     df = pd.DataFrame(matching_records)    
-    df["SEM_EXPIRY_DATE"] = pd.to_datetime(df["SEM_EXPIRY_DATE"])    
+    df["SEM_EXPIRY_DATE"] = pd.to_datetime(df["SEM_EXPIRY_DATE"])
     current_date = datetime.now().date()    
     df_future = df[df["SEM_EXPIRY_DATE"].dt.date > current_date]    
     closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]    
     
-    del df
+    del df, df_future
     
     return closest_expiry["SEM_SMST_SECURITY_ID"]
 
@@ -52,4 +52,4 @@ def filter_and_save_csv():
 
 
 #filter_and_save_csv(CSV_URL, OUTPUT_FILE)
-#print(find_matching_security_ids(22000, "CE", "NIFTY"))
+#print(find_matching_security_ids(22250, "CE", "NIFTY"))

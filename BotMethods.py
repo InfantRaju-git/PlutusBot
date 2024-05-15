@@ -40,14 +40,14 @@ def get_atm_strike(symbol):
     else:
         raise BotException("Invalid current_trend value in get_atm_strike")
 
-    return rounded_strike
+    return int(rounded_strike)
 
-def trade_symbol(symbol, days_before, timeframe):
+def trade_symbol(symbol):
     try:
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
-        start_time = end_time - datetime.timedelta(days=days_before)
+        start_time = end_time - datetime.timedelta(days=0)
         start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
@@ -55,7 +55,7 @@ def trade_symbol(symbol, days_before, timeframe):
         url = 'https://groww.in/v1/api/charting_service/v4/chart/exchange/NSE/segment/CASH/'+symbol
         params = {
             'endTimeInMillis': str(end_time_in_millis),
-            'intervalInMinutes': timeframe,
+            'intervalInMinutes': Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"],
             'startTimeInMillis': str(start_time_in_millis),
         }
         
@@ -133,3 +133,4 @@ def exit_open_trade(symbol):
         Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
         Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 
+trade_symbol("NIFTY")
