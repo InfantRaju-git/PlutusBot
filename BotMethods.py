@@ -132,5 +132,3 @@ def exit_open_trade(symbol):
         send_telegram_message("Exit EOD")
         Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
         Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
-
-trade_symbol("NIFTY")
