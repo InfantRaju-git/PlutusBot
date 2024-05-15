@@ -29,7 +29,7 @@ def run_trade_bot(symbol):
     
     while True:
         schedule.run_pending()
-        time.sleep(1)  # Delay to avoid consuming too many resources
+        time.sleep(1)
 
 def main(symbol):
     run_trade_bot(symbol)
