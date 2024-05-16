@@ -94,7 +94,7 @@ def trade_symbol(symbol):
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True and Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == SHORT:  #Exit PE
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - ohlc_open
-                send_telegram_message(symbol+" Exit Sell: "+ ohlc_open +", P/L: "+profit_loss)
+                send_telegram_message(symbol+" Exit Sell: "+ str(ohlc_open) +", P/L: "+str(profit_loss))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
                 Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 
@@ -110,7 +110,7 @@ def trade_symbol(symbol):
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True and Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == LONG: #Exit CE
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
-                send_telegram_message(symbol+" Exit Long: "+ohlc_open +", P/L: "+profit_loss)
+                send_telegram_message(symbol+" Exit Long: "+str(ohlc_open)+", P/L: "+str(profit_loss))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
                 Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 
