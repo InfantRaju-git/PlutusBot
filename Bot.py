@@ -13,8 +13,8 @@ def run_trade_bot(symbol):
     start_time = datetime.time(9, 15)
     end_time = datetime.time(15, 30)
 
-    print("Security Extraction Job: 9:10")
-    schedule.every().day.at(datetime.time(9, 10, 0).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
+    print("Security Extraction Job: 9:12:30")
+    schedule.every().day.at(datetime.time(9, 12, 30).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
 
     # Schedule get_ohlc_data method to run every time_frame minutes between 9:15:30 AM and 3:30 PM
     for hour in range(start_time.hour, end_time.hour + 1):
@@ -24,8 +24,8 @@ def run_trade_bot(symbol):
                 print("Scheduling Trade Job", schedule_time)
                 schedule.every().day.at(schedule_time.strftime("%H:%M:%S")).do(BotMethods.trade_symbol, symbol=symbol).tag('trade')
 
-    print("Exit Trade Job: 3:28")
-    schedule.every().day.at(datetime.time(15, 28, 30).strftime("%H:%M:%S")).do(BotMethods.exit_open_trade, symbol=symbol).tag('exittrade')
+    print("Exit Trade Job: 3:29:00")
+    schedule.every().day.at(datetime.time(15, 29, 0).strftime("%H:%M:%S")).do(BotMethods.exit_open_trade, symbol=symbol).tag('exittrade')
     
     while True:
         schedule.run_pending()

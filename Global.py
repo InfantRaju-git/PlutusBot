@@ -4,19 +4,21 @@ MIDNIFTY = "MIDCPNIFTY"
 SEND_TELEGRAM_MESSAGE = True
 TELEGRAM_TOKEN = "7045906590:AAGK5-gfPyqXXFx1cZJgfl9xUXcXcTBiUsI"
 TELEGRAM_CHATID = "1000631227"
+DHAN_CLIENT_ID = "1102961884"
+DHAN_TOKEN = ""
 
 SYMBOL_SETTINGS = {
     "NIFTY": {
         "TRADE_TF": 10,
         "POSITION_TYPE": None,
-        "CURR_SECURITYID" : None,
+        "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
         "ENTRY_PRICE": None 
     },
     "BANKNIFTY": {
         "TRADE_TF": 10,
         "POSITION_TYPE": None,
-        "CURR_SECURITYID" : None,
+        "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
         "ENTRY_PRICE": None 
     }
