@@ -60,7 +60,7 @@ def filter_and_save_csv():
     except Exception as e:
         print("Error saving filtered CSV:", e)
 
-
+#Required security id and position type
 def place_order(symbol):
     headers = {
         "Content-Type": "application/json",
@@ -75,7 +75,7 @@ def place_order(symbol):
     else:
         raise ValueError("Unsupported symbol. Only 'NIFTY' and 'BANKNIFTY' are supported.")
     
-    transaction_type = BUY if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == LONG else SELL
+    transaction_type = BUY if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] in (LONG,SHORT) else SELL
 
     data = {
         "dhanClientId": Global.DHAN_CLIENT_ID,
@@ -105,8 +105,11 @@ def place_order(symbol):
     log_entry = "Req: "+symbol+" "+transaction_type+" "+Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID']+"\n"  
     
     try:
-        response = requests.post(DHAN_API_URL, headers=headers, json=data)
-        log_entry += "Res: "+str(response)+"\n"
+        if Global.DHAN_TOKEN != "":
+            response = requests.post(DHAN_API_URL, headers=headers, json=data)
+            log_entry += "Res: "+str(response)+"\n"
+        else:
+            print("Skipping place order")
     except Exception as e:
         log_entry += "Res_error: "+str(e)+"\n"
         print("Error in Place order: "+str(e))
@@ -114,7 +117,7 @@ def place_order(symbol):
     with open(log_file_name, "a") as log_file:
         log_file.write(str(datetime.datetime.now())+"\n"+log_entry)
 
-    del data,response
+    del data,response 
 
 #response = place_order("NIFTY")
 #filter_and_save_csv()
