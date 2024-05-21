@@ -4,7 +4,6 @@ from datetime import datetime
 import pandas as pd
 import requests
 import uuid
-import Global
 
 CSV_URL = "https://images.dhan.co/api-data/api-scrip-master.csv"
 OUTPUT_FILE = "SecurityInfo/SecurityID.csv"
@@ -14,7 +13,6 @@ SHORT = "PE"
 LONG = "CE"
 BUY = "BUY"
 SELL = "SELL"
-
 
 def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=1000):
     matching_records = []
@@ -43,41 +41,23 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
     
     return closest_expiry["SEM_SMST_SECURITY_ID"]
 
-
-def filter_and_save_csv():
-    try:
-        df = pd.read_csv(CSV_URL)
-    except Exception as e:
-        print("Error reading CSV:", e)
-        return
-    
-    df_filtered = df[df['SEM_INSTRUMENT_NAME'] == 'OPTIDX']
-    
-    try:
-        df_filtered.to_csv(OUTPUT_FILE, index=False)
-        print("Filtered CSV saved successfully.")
-    except Exception as e:
-        print("Error saving filtered CSV:", e)
-
 #Required security id and position type
-def place_order(symbol):
+def place_order(symbol,transaction_type, security_id):
     headers = {
         "Content-Type": "application/json",
-        "access-token": Global.DHAN_TOKEN
+        "access-token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJkaGFuIiwicGFydG5lcklkIjoiIiwiZXhwIjoxNzE2ODY4NTk0LCJ0b2tlbkNvbnN1bWVyVHlwZSI6IlNFTEYiLCJ3ZWJob29rVXJsIjoiIiwiZGhhbkNsaWVudElkIjoiMTEwMjk2MTg4NCJ9.4knrPvnSsERK-r6FevWQ7B56ggrjfvneKGUt2qd3cuY7gvkLgTk0MF-6K9dbGGVZ8C3HmsQZUO3ov0DSXYYpWA"
     }
     
     correlation_id = str(uuid.uuid4())
-    if symbol == Global.NIFTY:
+    if symbol == "NIFTY":
         quantity = 25
-    elif symbol == Global.BANKNIFTY:
+    elif symbol == "BANKNIFTY":
         quantity = 15
     else:
         raise ValueError("Unsupported symbol. Only 'NIFTY' and 'BANKNIFTY' are supported.")
     
-    transaction_type = BUY if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] in (LONG,SHORT) else SELL
-
     data = {
-        "dhanClientId": Global.DHAN_CLIENT_ID,
+        "dhanClientId": "1102961884",
         "correlationId": correlation_id,
         "transactionType": transaction_type,
         "exchangeSegment": "NSE_FNO",  # Set to NSE F&O as required
@@ -85,7 +65,7 @@ def place_order(symbol):
         "orderType": "MARKET",  # Always MARKET as per requirement
         "validity": "IOC",  # Immediate or Cancel as per requirement
         "tradingSymbol": symbol,
-        "securityId": Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"],
+        "securityId": security_id,
         "quantity": quantity,  # Quantity based on symbol, as an integer
         "disclosedQuantity": "",
         "price": "",
@@ -99,25 +79,13 @@ def place_order(symbol):
         "drvStrikePrice": ""
     }
 
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    log_file_name = f"{LOGS_FOLDER}/{current_date}.log"
-    log_entry = "Req: "+symbol+" "+transaction_type+" "+Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID']+"\n"  
-    
     try:
-        if Global.DHAN_TOKEN != "":
-            response = requests.post(DHAN_API_URL, headers=headers, json=data)
-            log_entry += "Res: "+str(response)+"\n"
-        else:
-            print("Skipping place order")
+        response = requests.post(DHAN_API_URL, headers=headers, json=data)
+        print(response)
     except Exception as e:
-        log_entry += "Res_error: "+str(e)+"\n"
         print("Error in Place order: "+str(e))
-
-    with open(log_file_name, "a") as log_file:
-        log_file.write(str(datetime.now())+"\n"+log_entry)
 
     del data,response 
 
-#response = place_order("NIFTY")
-#filter_and_save_csv()
-#print(find_matching_security_ids(22250, "CE", "NIFTY"))
+#place_order("NIFTY")
+print(find_matching_security_ids(22500, "PE", "NIFTY"))
