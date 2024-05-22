@@ -9,8 +9,8 @@ CSV_URL = "https://images.dhan.co/api-data/api-scrip-master.csv"
 OUTPUT_FILE = "SecurityInfo/SecurityID.csv"
 DHAN_API_URL = "https://api.dhan.co/orders"
 LOGS_FOLDER = "SecurityInfo"
-SHORT = "PE"
-LONG = "CE"
+SHORT = "PUT"
+LONG = "CALL"
 BUY = "BUY"
 SELL = "SELL"
 
@@ -58,7 +58,7 @@ def place_order(symbol,transaction_type, security_id):
     
     data = {
         "dhanClientId": "1102961884",
-        "correlationId": correlation_id,
+        "correlationId": str(uuid.uuid4()).replace("-","")[0:25],
         "transactionType": transaction_type,
         "exchangeSegment": "NSE_FNO",  # Set to NSE F&O as required
         "productType": "INTRADAY",  # As per the requirement
@@ -71,21 +71,21 @@ def place_order(symbol,transaction_type, security_id):
         "price": "",
         "triggerPrice": "",
         "afterMarketOrder": False,
-        "amoTime": "",
+        "amoTime": "OPEN",
         "boProfitValue": "",
         "boStopLossValue": "",
         "drvExpiryDate": "",
-        "drvOptionType": "",
+        "drvOptionType": "CALL",
         "drvStrikePrice": ""
     }
 
     try:
         response = requests.post(DHAN_API_URL, headers=headers, json=data)
-        print(response)
+        print(response.json())
     except Exception as e:
         print("Error in Place order: "+str(e))
 
     del data,response 
 
-#place_order("NIFTY")
-print(find_matching_security_ids(22500, "PE", "NIFTY"))
+place_order("NIFTY","BUY","38766")
+#print(find_matching_security_ids(22550, "CE", "NIFTY"))

@@ -10,8 +10,8 @@ CSV_URL = "https://images.dhan.co/api-data/api-scrip-master.csv"
 OUTPUT_FILE = "SecurityInfo/SecurityID.csv"
 DHAN_API_URL = "https://api.dhan.co/orders"
 LOGS_FOLDER = "SecurityInfo"
-SHORT = "PE"
-LONG = "CE"
+SHORT = "PUT"
+LONG = "CALL"
 BUY = "BUY"
 SELL = "SELL"
 
@@ -60,13 +60,13 @@ def filter_and_save_csv():
         print("Error saving filtered CSV:", e)
 
 #Required security id and position type
-def place_order(symbol):
+def place_order(symbol, optionType, transaction_type):
     headers = {
         "Content-Type": "application/json",
         "access-token": Global.DHAN_TOKEN
     }
     
-    correlation_id = str(uuid.uuid4())
+    correlation_id = str(uuid.uuid4()).replace("-","")[0:25]
     if symbol == Global.NIFTY:
         quantity = 25
     elif symbol == Global.BANKNIFTY:
@@ -74,8 +74,6 @@ def place_order(symbol):
     else:
         raise ValueError("Unsupported symbol. Only 'NIFTY' and 'BANKNIFTY' are supported.")
     
-    transaction_type = BUY if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] in (LONG,SHORT) else SELL
-
     data = {
         "dhanClientId": Global.DHAN_CLIENT_ID,
         "correlationId": correlation_id,
@@ -85,23 +83,23 @@ def place_order(symbol):
         "orderType": "MARKET",  # Always MARKET as per requirement
         "validity": "IOC",  # Immediate or Cancel as per requirement
         "tradingSymbol": symbol,
-        "securityId": Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"],
+        "securityId": str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]),
         "quantity": quantity,  # Quantity based on symbol, as an integer
         "disclosedQuantity": "",
         "price": "",
         "triggerPrice": "",
         "afterMarketOrder": False,
-        "amoTime": "",
+        "amoTime": "OPEN",
         "boProfitValue": "",
         "boStopLossValue": "",
         "drvExpiryDate": "",
-        "drvOptionType": "",
+        "drvOptionType": optionType,
         "drvStrikePrice": ""
     }
 
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    current_date = datetime.now().strftime("%Y-%m-%d")
     log_file_name = f"{LOGS_FOLDER}/{current_date}.log"
-    log_entry = "Req: "+symbol+" "+transaction_type+" "+Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID']+"\n"  
+    log_entry = "Req: "+symbol+" "+transaction_type+" "+str(Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID'])+"\n"  
     
     try:
         if Global.DHAN_TOKEN != "":
