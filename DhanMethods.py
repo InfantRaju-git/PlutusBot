@@ -19,6 +19,10 @@ SELL = "SELL"
 def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=1000):
     matching_records = []
     cur_month_year = datetime.now().strftime("%B%Y")
+    if option_type == LONG:
+        option_type = "CE" 
+    if option_type == SHORT:
+        option_type = "PE"
     trading_symbol = f"{symbol}-{cur_month_year}-{strike_price}-{option_type}"
 
     for chunk in pd.read_csv(OUTPUT_FILE, chunksize=chunk_size, usecols=[
@@ -105,6 +109,7 @@ def place_order(symbol, optionType, transaction_type):
         if Global.DHAN_TOKEN != "":
             response = requests.post(DHAN_API_URL, headers=headers, json=data)
             log_entry += "Res: "+str(response)+"\n"
+            del response
         else:
             print("Skipping place order")
     except Exception as e:
@@ -114,7 +119,7 @@ def place_order(symbol, optionType, transaction_type):
     with open(log_file_name, "a") as log_file:
         log_file.write(str(datetime.now())+"\n"+log_entry)
 
-    del data,response 
+    del data
 
 #response = place_order("NIFTY")
 #filter_and_save_csv()

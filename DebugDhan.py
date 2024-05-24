@@ -87,5 +87,5 @@ def place_order(symbol,transaction_type, security_id):
 
     del data,response 
 
-place_order("NIFTY","BUY","38766")
+#place_order("NIFTY","BUY","38766")
 #print(find_matching_security_ids(22550, "CE", "NIFTY"))
