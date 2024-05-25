@@ -96,14 +96,6 @@ def trade_symbol(symbol):
             else:
                 i = index
             if row['HA_Close'] >= row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] >= ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_Low']):
-                if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True and Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == SHORT:  #Exit PE
-                    Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
-                    Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
-                    DhanMethods.place_order(symbol, SHORT, SELL)
-                    profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - row['open']
-                    send_telegram_message(symbol+" Exit Sell: "+ str(row['open']) +", P/L: "+str(profit_loss))
-                    Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
-                    Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 
                 if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False: #Enter CE
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = LONG
@@ -115,15 +107,7 @@ def trade_symbol(symbol):
                     send_telegram_message(symbol+" Long Entry:"+ str(Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
 
             if row['HA_Close'] < row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] < ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_High']):
-                if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True and Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == LONG: #Exit CE
-                    Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
-                    Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
-                    DhanMethods.place_order(symbol, LONG, SELL)
-                    profit_loss = row['open'] - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
-                    send_telegram_message(symbol+" Exit Long: "+str(row['open'])+", P/L: "+str(profit_loss))
-                    Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
-                    Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
-
+                
                 if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False: #Enter PE
                     Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = SHORT
@@ -133,8 +117,29 @@ def trade_symbol(symbol):
                     print("Short: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
                     send_telegram_message(symbol+" Sell Entry:"+ str(Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
 
+            if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
+                if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == LONG:
+                    if row['HA_Close'] < row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] < ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_High']):
+                        Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
+                        Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
+                        DhanMethods.place_order(symbol, LONG, SELL)
+                        profit_loss = row['open'] - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
+                        send_telegram_message(symbol+" Exit Long: "+str(row['open'])+", P/L: "+str(profit_loss))
+                        Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
+                        Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
+            
+                if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == SHORT:
+                    if row['HA_Close'] >= row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] >= ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_Low']):
+                        Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
+                        Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
+                        DhanMethods.place_order(symbol, SHORT, SELL)
+                        profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - row['open']
+                        send_telegram_message(symbol+" Exit Sell: "+ str(row['open']) +", P/L: "+str(profit_loss))
+                        Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
+                        Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
+
     except Exception as e:
-            raise BotException("Error in trade symbol: "+str(e))
+        raise BotException("Error in trade symbol: "+str(e))
 
 def exit_open_trade(symbol):
     if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True):

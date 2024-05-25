@@ -75,6 +75,8 @@ def place_order(symbol, optionType, transaction_type):
         quantity = 25
     elif symbol == Global.BANKNIFTY:
         quantity = 15
+    elif symbol == Global.FINNIFTY:
+        quantity = 40
     else:
         raise ValueError("Unsupported symbol. Only 'NIFTY' and 'BANKNIFTY' are supported.")
     
