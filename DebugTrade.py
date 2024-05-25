@@ -95,7 +95,7 @@ def trade_symbol(symbol):
                 i = 1
             else:
                 i = index
-            if row['HA_Close'] >= row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] >= ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_Low']):
+            if row['HA_Close'] >= row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] >= ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_Low']) and (ohlc.iloc[i-1]['HA_Close'] - ohlc.iloc[i-1]['HA_Open'] > 5):
 
                 if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False: #Enter CE
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = LONG
@@ -106,7 +106,7 @@ def trade_symbol(symbol):
                     print("Long: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
                     send_telegram_message(symbol+" Long Entry:"+ str(Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
 
-            if row['HA_Close'] < row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] < ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_High']):
+            if row['HA_Close'] < row['HA_Open'] and (ohlc.iloc[i-1]['HA_Close'] < ohlc.iloc[i-1]['HA_Open'] or ohlc.iloc[i-1]['HA_Open'] == ohlc.iloc[i-1]['HA_High']) and (ohlc.iloc[i-1]['HA_Open'] - ohlc.iloc[i-1]['HA_Close'] > 5):
                 
                 if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False: #Enter PE
                     Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
@@ -143,6 +143,7 @@ def trade_symbol(symbol):
 
 def exit_open_trade(symbol):
     if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True):
+        DhanMethods.place_order(symbol, Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"], SELL)
         Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
         Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
         send_telegram_message("Exit EOD")
