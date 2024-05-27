@@ -10,21 +10,21 @@ DHAN_TOKEN = ""
 
 SYMBOL_SETTINGS = {
     "NIFTY": {
-        "TRADE_TF": 15,
+        "TRADE_TF": 10,
         "POSITION_TYPE": None,
         "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
         "ENTRY_PRICE": None 
     },
     "FINNIFTY": {
-        "TRADE_TF": 15,
+        "TRADE_TF": 10,
         "POSITION_TYPE": None,
         "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
         "ENTRY_PRICE": None 
     },
     "BANKNIFTY": {
-        "TRADE_TF": 15,
+        "TRADE_TF": 10,
         "POSITION_TYPE": None,
         "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
