@@ -84,7 +84,7 @@ def trade_symbol(symbol):
         last_index = len(ohlc)-1
         curr_close = ohlc.iloc[last_index]['HA_Close']
         curr_open = ohlc.iloc[last_index]['HA_Open']
-        ohlc_open = ohlc.iloc[last_index]['open']
+        ohlc_close = ohlc.iloc[last_index]['close']
         prev_close = ohlc.iloc[last_index-1]['HA_Close']
         prev_open = ohlc.iloc[last_index-1]['HA_Open']
         prev_low = ohlc.iloc[last_index-1]['HA_Low']
@@ -98,7 +98,7 @@ def trade_symbol(symbol):
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = LONG
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
-                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
                 Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = DhanMethods.find_matching_security_ids(get_atm_strike(symbol), LONG, symbol)
                 DhanMethods.place_order(symbol , LONG, BUY)
                 print("Long: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
@@ -109,7 +109,7 @@ def trade_symbol(symbol):
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
                 Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = SHORT
-                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
                 Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = DhanMethods.find_matching_security_ids(get_atm_strike(symbol), SHORT, symbol)
                 DhanMethods.place_order(symbol, SHORT, BUY)
                 print("Short: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
@@ -123,8 +123,8 @@ def trade_symbol(symbol):
                     Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
                     DhanMethods.place_order(symbol, LONG, SELL)
-                    profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
-                    send_telegram_message(symbol+" Exit Long: "+str(ohlc_open)+", P/L: "+str(int(profit_loss)))
+                    profit_loss = ohlc_close - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
+                    send_telegram_message(symbol+" Exit Long: "+str(ohlc_close)+", P/L: "+str(int(profit_loss)))
                     Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
                     Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 
@@ -133,8 +133,8 @@ def trade_symbol(symbol):
                     Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
                     DhanMethods.place_order(symbol, SHORT, SELL)
-                    profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - ohlc_open
-                    send_telegram_message(symbol+" Exit Sell: "+ str(ohlc_open) +", P/L: "+str(int(profit_loss)))
+                    profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - ohlc_close
+                    send_telegram_message(symbol+" Exit Sell: "+ str(ohlc_close) +", P/L: "+str(int(profit_loss)))
                     Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
                     Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 

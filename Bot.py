@@ -16,10 +16,10 @@ def run_trade_bot(symbol):
     print("Security Extraction Job: 9:12:30")
     schedule.every().day.at(datetime.time(9, 12, 30).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
 
-    # Schedule get_ohlc_data method to run every time_frame minutes between 9:15:30 AM and 3:30 PM
+    time_frame = Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]-1
     for hour in range(start_time.hour, end_time.hour + 1):
-        for minute in range(start_time.minute, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
-            schedule_time = datetime.time(hour, minute, 7)
+        for minute in range(start_time.minute+time_frame, 60, time_frame+1):
+            schedule_time = datetime.time(hour, minute, 45)
             if start_time <= schedule_time < end_time:
                 print("Scheduling Trade Job", schedule_time)
                 schedule.every().day.at(schedule_time.strftime("%H:%M:%S")).do(BotMethods.trade_symbol, symbol=symbol).tag('trade')
