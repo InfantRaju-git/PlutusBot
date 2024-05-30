@@ -19,11 +19,11 @@ SELL = "SELL"
 def get_next_month_year():
     next_month = datetime.now().replace(day=28) + timedelta(days=4)  # this will never fail
     next_month = next_month.replace(day=1)  # set to first day of the next month
-    return next_month.strftime("%B%Y")
+    return next_month.strftime("%b%Y")
 
 def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=1000):
     matching_records = []
-    cur_month_year = datetime.now().strftime("%B%Y")
+    cur_month_year = datetime.now().strftime("%b%Y")
     next_month_year = get_next_month_year()
 
     if option_type == LONG:
@@ -138,7 +138,7 @@ def place_order(symbol, optionType, transaction_type):
         print("Error in Place order: "+str(e))
 
     with open(log_file_name, "a") as log_file:
-        log_file.write(str(datetime.now())+"\n"+log_entry)
+        log_file.write(str(datetime.now())+": "+log_entry)
 
     del data
 
