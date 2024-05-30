@@ -6,6 +6,7 @@ import pandas as pd
 import time
 import Global
 import DhanMethods
+from ta.trend import PSARIndicator
 
 SHORT = "PUT"
 LONG = "CALL"
@@ -71,45 +72,37 @@ def trade_symbol(symbol):
         ohlc = df['candles'].apply(pd.Series)
         ohlc.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         ohlc.drop(['volume'], axis=1, inplace=True)
+        psar = PSARIndicator(ohlc['high'], ohlc['low'], ohlc['close'], step=0.2) # Calculate PSAR values
+        ohlc['psar'] = psar.psar()
         
         del response, json_data, df
 
-        ohlc['HA_Close'] = (ohlc['open'] + ohlc['high'] + ohlc['low'] + ohlc['close']) / 4
-        ha_open = ohlc['HA_Close'].shift(1)
-        ohlc['HA_Open'] = ha_open.values[0]
-        ohlc.loc[1:, 'HA_Open'] = ha_open.values[1:]
-        ohlc['HA_High'] = ohlc[['HA_Open', 'HA_Close', 'high']].max(axis=1)
-        ohlc['HA_Low'] = ohlc[['HA_Open', 'HA_Close', 'low']].min(axis=1)
-
         last_index = len(ohlc)-1
-        curr_close = ohlc.iloc[last_index]['HA_Close']
-        curr_open = ohlc.iloc[last_index]['HA_Open']
-        ohlc_close = ohlc.iloc[last_index]['close']
-        prev_close = ohlc.iloc[last_index-1]['HA_Close']
-        prev_open = ohlc.iloc[last_index-1]['HA_Open']
-        prev_low = ohlc.iloc[last_index-1]['HA_Low']
-        prev_high = ohlc.iloc[last_index-1]['HA_High']
+        ohlc_open = ohlc.iloc[last_index]['open']
+        prev_close = ohlc.iloc[last_index-1]['close']
+        prev_open = ohlc.iloc[last_index-1]['open']
+        prev_psar = ohlc.iloc[last_index-1]['psar']
         min_price_moment = 5
 
         del ohlc
 
-        if curr_close >= curr_open and (prev_close >= prev_open or prev_open == prev_low) and (prev_close - prev_open > min_price_moment): #CE Entry
+        if prev_close - prev_open > min_price_moment and prev_open - prev_psar >= 10: #CE Entry
 
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = LONG
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
-                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
                 Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = DhanMethods.find_matching_security_ids(get_atm_strike(symbol), LONG, symbol)
                 DhanMethods.place_order(symbol , LONG, BUY)
                 print("Long: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
                 send_telegram_message(symbol+" Long Entry:"+ str(Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
 
-        if curr_close < curr_open and (prev_close < prev_open or prev_open == prev_high) and (prev_open - prev_close > min_price_moment): #PE Entry
+        if prev_open - prev_close > min_price_moment and prev_psar - prev_open >= 10: #PE Entry
 
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
                 Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = SHORT
-                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
                 Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = DhanMethods.find_matching_security_ids(get_atm_strike(symbol), SHORT, symbol)
                 DhanMethods.place_order(symbol, SHORT, BUY)
                 print("Short: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
@@ -119,22 +112,22 @@ def trade_symbol(symbol):
         if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
             
             if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == LONG:
-                if curr_close < curr_open and (prev_close < prev_open or prev_open == prev_high):
+                if prev_open - prev_close > min_price_moment and prev_psar - prev_open >= 10:
                     Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
                     DhanMethods.place_order(symbol, LONG, SELL)
-                    profit_loss = ohlc_close - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
-                    send_telegram_message(symbol+" Exit Long: "+str(ohlc_close)+", P/L: "+str(int(profit_loss)))
+                    profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
+                    send_telegram_message(symbol+" Exit Long: "+str(ohlc_open)+", P/L: "+str(int(profit_loss)))
                     Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
                     Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 
             if Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] == SHORT:
-                if curr_close >= curr_open and (prev_close >= prev_open or prev_open == prev_low):
+                if prev_close - prev_open > min_price_moment and prev_open - prev_psar >= 10:
                     Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                     Global.SYMBOL_SETTINGS[symbol]["POSITION_TYPE"] = None
                     DhanMethods.place_order(symbol, SHORT, SELL)
-                    profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - ohlc_close
-                    send_telegram_message(symbol+" Exit Sell: "+ str(ohlc_close) +", P/L: "+str(int(profit_loss)))
+                    profit_loss = Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] - ohlc_open
+                    send_telegram_message(symbol+" Exit Sell: "+ str(ohlc_open) +", P/L: "+str(int(profit_loss)))
                     Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
                     Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = None
 

@@ -1,6 +1,6 @@
 import pandas as pd
 import gc
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import requests
 import uuid
@@ -16,37 +16,56 @@ BUY = "BUY"
 SELL = "SELL"
 
 
+def get_next_month_year():
+    next_month = datetime.now().replace(day=28) + timedelta(days=4)  # this will never fail
+    next_month = next_month.replace(day=1)  # set to first day of the next month
+    return next_month.strftime("%B%Y")
+
 def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=1000):
     matching_records = []
     cur_month_year = datetime.now().strftime("%B%Y")
+    next_month_year = get_next_month_year()
+
     if option_type == LONG:
         option_type = "CE" 
-    if option_type == SHORT:
+    elif option_type == SHORT:
         option_type = "PE"
-    trading_symbol = f"{symbol}-{cur_month_year}-{strike_price}-{option_type}"
 
-    for chunk in pd.read_csv(OUTPUT_FILE, chunksize=chunk_size, usecols=[
-        "SEM_TRADING_SYMBOL",
-        "SEM_EXPIRY_DATE",
-        "SEM_SMST_SECURITY_ID",
-    ]):
-        df_filtered = chunk[ chunk["SEM_TRADING_SYMBOL"] == trading_symbol ]
-        if not df_filtered.empty:
-            matching_records.extend(df_filtered[["SEM_SMST_SECURITY_ID", "SEM_EXPIRY_DATE"]].to_dict("records"))
+    trading_symbol_current = f"{symbol}-{cur_month_year}-{strike_price}-{option_type}"
+    trading_symbol_next = f"{symbol}-{next_month_year}-{strike_price}-{option_type}"
 
-        del chunk, df_filtered
-        gc.collect()
+    def check_trading_symbol(trading_symbol):
+        local_matching_records = []
+        for chunk in pd.read_csv(OUTPUT_FILE, chunksize=chunk_size, usecols=[
+            "SEM_TRADING_SYMBOL",
+            "SEM_EXPIRY_DATE",
+            "SEM_SMST_SECURITY_ID",
+        ]):
+            df_filtered = chunk[chunk["SEM_TRADING_SYMBOL"] == trading_symbol]
+            if not df_filtered.empty:
+                local_matching_records.extend(df_filtered[["SEM_SMST_SECURITY_ID", "SEM_EXPIRY_DATE"]].to_dict("records"))
+            del chunk, df_filtered
+            gc.collect()
+        return local_matching_records
 
-    df = pd.DataFrame(matching_records)    
-    df["SEM_EXPIRY_DATE"] = pd.to_datetime(df["SEM_EXPIRY_DATE"])
-    current_date = datetime.now().date()    
-    df_future = df[df["SEM_EXPIRY_DATE"].dt.date > current_date]    
-    closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]    
+    # First check with the current month's value
+    matching_records = check_trading_symbol(trading_symbol_current)
+
+    # If no matching records, check with the next month's value
+    if not matching_records:
+        matching_records = check_trading_symbol(trading_symbol_next)
+
+    if matching_records:
+        df = pd.DataFrame(matching_records)
+        df["SEM_EXPIRY_DATE"] = pd.to_datetime(df["SEM_EXPIRY_DATE"])
+        current_date = datetime.now().date()
+        df_future = df[df["SEM_EXPIRY_DATE"].dt.date >= current_date]
+        if not df_future.empty:
+            closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]
+            del df, df_future
+            return closest_expiry["SEM_SMST_SECURITY_ID"]
     
-    del df, df_future
-    
-    return closest_expiry["SEM_SMST_SECURITY_ID"]
-
+    return None
 
 def filter_and_save_csv():
     try:
