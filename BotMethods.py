@@ -22,10 +22,10 @@ def unix_to_local_time(unix_timestamp):
     return str(dt.fromtimestamp(unix_timestamp).strftime('%Y-%m-%d %H:%M:%S'))
 
 def write_to_log(message):
-    current_date = datetime.now().strftime("%Y-%m-%d")
+    current_date = dt.now().strftime("%Y-%m-%d")
     log_file_name = f"{LOGS_FOLDER}/{current_date}.log"
     with open(log_file_name, "a") as log_file:
-        log_file.write(str(datetime.now())+": "+message)
+        log_file.write(str(dt.now())+": "+message)
 
 def send_telegram_message(message):
     if Global.SEND_TELEGRAM_MESSAGE:

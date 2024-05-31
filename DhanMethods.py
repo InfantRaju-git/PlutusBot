@@ -50,10 +50,7 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
 
     # First check with the current month's value
     matching_records = check_trading_symbol(trading_symbol_current)
-
-    # If no matching records, check with the next month's value
-    if not matching_records:
-        matching_records = check_trading_symbol(trading_symbol_next)
+    findNextMatch = False
 
     if matching_records:
         df = pd.DataFrame(matching_records)
@@ -64,6 +61,21 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
             closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]
             del df, df_future
             return closest_expiry["SEM_SMST_SECURITY_ID"]
+        else:
+            findNextMatch = True
+
+    # If no matching records, check with the next month's value
+    if not matching_records or findNextMatch:
+        matching_records = check_trading_symbol(trading_symbol_next)
+        if matching_records:
+            df = pd.DataFrame(matching_records)
+            df["SEM_EXPIRY_DATE"] = pd.to_datetime(df["SEM_EXPIRY_DATE"])
+            current_date = datetime.now().date()
+            df_future = df[df["SEM_EXPIRY_DATE"].dt.date >= current_date]
+            if not df_future.empty:
+                closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]
+                del df, df_future
+                return closest_expiry["SEM_SMST_SECURITY_ID"]
     
     return None
 
