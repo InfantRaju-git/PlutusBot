@@ -60,7 +60,7 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
         if not df_future.empty:
             closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]
             del df, df_future
-            return closest_expiry["SEM_SMST_SECURITY_ID"]
+            return [closest_expiry["SEM_SMST_SECURITY_ID"], closest_expiry["SEM_EXPIRY_DATE"]]
         else:
             findNextMatch = True
 
@@ -75,7 +75,7 @@ def find_matching_security_ids(strike_price, option_type, symbol, chunk_size=100
             if not df_future.empty:
                 closest_expiry = df_future.loc[df_future["SEM_EXPIRY_DATE"].idxmin()]
                 del df, df_future
-                return closest_expiry["SEM_SMST_SECURITY_ID"]
+                return [closest_expiry["SEM_SMST_SECURITY_ID"], closest_expiry["SEM_EXPIRY_DATE"]]
     
     return None
 
@@ -150,7 +150,7 @@ def place_order(symbol, optionType, transaction_type):
         print("Error in Place order: "+str(e))
 
     with open(log_file_name, "a") as log_file:
-        log_file.write(str(datetime.now())+": "+log_entry)
+        log_file.write("\n"+log_entry)
 
     del data
 

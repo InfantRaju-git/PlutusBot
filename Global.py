@@ -10,24 +10,36 @@ DHAN_TOKEN = ""
 
 SYMBOL_SETTINGS = {
     "NIFTY": {
-        "TRADE_TF": 5,
-        "POSITION_TYPE": None,
+        "OPTION_ID": None,
         "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None 
+        "ENTRY_PRICE": None,
+        "DAILY_PL": 0,
+        "TRADE_TF": 15,
+        "DAILY_PL_LIMIT": 20,
+        "STOP_LOSS": 5,
+        "TAKE_PROFIT": 5
     },
     "FINNIFTY": {
-        "TRADE_TF": 5,
-        "POSITION_TYPE": None,
+        "OPTION_ID": None,
         "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None 
+        "ENTRY_PRICE": None,
+        "DAILY_PL": 0,
+        "TRADE_TF": 15,
+        "DAILY_PL_LIMIT": 20,
+        "STOP_LOSS": 5,
+        "TAKE_PROFIT": 5
     },
     "BANKNIFTY": {
-        "TRADE_TF": 5,
-        "POSITION_TYPE": None,
+        "OPTION_ID": None,
         "CURR_SECURITYID" : "",
         "OPEN_POSITION": False,
-        "ENTRY_PRICE": None 
+        "ENTRY_PRICE": None,
+        "DAILY_PL": 0,
+        "TRADE_TF": 15,
+        "DAILY_PL_LIMIT": 20,
+        "STOP_LOSS": 5,
+        "TAKE_PROFIT": 5
     }
 }
