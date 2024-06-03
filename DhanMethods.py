@@ -135,7 +135,7 @@ def place_order(symbol, optionType, transaction_type):
     }
 
     current_date = datetime.now().strftime("%Y-%m-%d")
-    log_file_name = f"{LOGS_FOLDER}/{current_date}.log"
+    log_file_name = f"{LOGS_FOLDER}/{symbol}-{current_date}.log"
     log_entry = "Req: "+symbol+" "+transaction_type+" "+str(Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID'])+"\n"  
     
     try:
@@ -150,7 +150,7 @@ def place_order(symbol, optionType, transaction_type):
         print("Error in Place order: "+str(e))
 
     with open(log_file_name, "a") as log_file:
-        log_file.write("\n"+log_entry)
+        log_file.write(log_entry)
 
     del data
 

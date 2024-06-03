@@ -23,7 +23,7 @@ def write_to_log(symbol,message):
     current_date = dt.now().strftime("%Y-%m-%d")
     log_file_name = f"{LOGS_FOLDER}/{symbol}-{current_date}.log"
     with open(log_file_name, "a") as log_file:
-        log_file.write(str(dt.now())+"\n"+message)
+        log_file.write(str(dt.now())+": "+message)
 
 def send_telegram_message(message):
     if Global.SEND_TELEGRAM_MESSAGE:
@@ -99,23 +99,12 @@ def set_config(symbol, trend):
     
     send_telegram_message("Option ID: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"])
 
-def calculate_heikin_ashi(df):
-    ha_df = pd.DataFrame(index=df.index, columns=['HA-Open', 'HA-High', 'HA-Low', 'HA-Close'])
-    ha_df['HA-Close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
-    ha_df.at[0, 'HA-Open'] = (df['open'].iloc[0] + df['close'].iloc[0]) / 2
-    for i in range(1, len(df)):
-        ha_df.at[i, 'HA-Open'] = (ha_df.at[i - 1, 'HA-Open'] + ha_df.at[i - 1, 'HA-Close']) / 2
-        ha_df.at[i, 'HA-High'] = max(df['high'].iloc[i], ha_df.at[i, 'HA-Open'], ha_df.at[i, 'HA-Close'])
-        ha_df.at[i, 'HA-Low'] = min(df['low'].iloc[i], ha_df.at[i, 'HA-Open'], ha_df.at[i, 'HA-Close'])
-    result_df = pd.concat([df, ha_df], axis=1)
-    return result_df
-
 def trade_symbol(symbol, trend):
     try:
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
-        start_time = end_time - datetime.timedelta(days=3)
+        start_time = end_time - datetime.timedelta(days=0)
         start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
@@ -137,14 +126,13 @@ def trade_symbol(symbol, trend):
         ohlc = df['candles'].apply(pd.Series)
         ohlc.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         ohlc.drop(['volume'], axis=1, inplace=True)
-        ohlc = calculate_heikin_ashi(ohlc)
 
         del response, json_data, df
 
         last_index = len(ohlc)-1
         ohlc_open = ohlc.iloc[last_index]['open']
-        prev_close = ohlc.iloc[last_index-1]['HA-Close']
-        prev_open = ohlc.iloc[last_index-1]['HA-Open']
+        prev_close = ohlc.iloc[last_index-1]['close']
+        prev_open = ohlc.iloc[last_index-1]['open']
         if trend == "CE":
             take_position = "CALL" 
         else:
