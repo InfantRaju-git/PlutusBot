@@ -19,30 +19,24 @@ def BotException(exceptionMessage):
 def unix_to_local_time(unix_timestamp):
     return str(dt.fromtimestamp(unix_timestamp).strftime('%Y-%m-%d %H:%M:%S'))
 
-def write_to_log(symbol,message):
-    current_date = dt.now().strftime("%Y-%m-%d")
-    log_file_name = f"{LOGS_FOLDER}/{symbol}-{current_date}.log"
-    with open(log_file_name, "a") as log_file:
-        log_file.write(str(dt.now())+": "+message)
-
 def send_telegram_message(message):
     if Global.SEND_TELEGRAM_MESSAGE:
         url = f"https://api.telegram.org/bot{Global.TELEGRAM_TOKEN}/sendMessage?chat_id={Global.TELEGRAM_CHATID}&text={message}"
         requests.get(url)
     
-def set_config(symbol, trend):
+def set_config(symbol):
     end_time_in_millis = int(time.time() * 1000)
     end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
-    start_time = end_time - datetime.timedelta(days=2) #to change have 0
+    start_time = end_time - datetime.timedelta(days=40)
     start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
     start_time_in_millis = int(start_time.timestamp() * 1000)
     end_time_in_millis = int(end_time.timestamp() * 1000)
-    close_price = None
+    open_price = None
 
     url = 'https://groww.in/v1/api/charting_service/v4/chart/exchange/NSE/segment/CASH/'+symbol
     params = {
         'endTimeInMillis': str(end_time_in_millis),
-        'intervalInMinutes': 1,
+        'intervalInMinutes': 60,
         'startTimeInMillis': str(start_time_in_millis),
     }
     
@@ -57,8 +51,16 @@ def set_config(symbol, trend):
         df.drop(['changeValue', 'changePerc', 'closingPrice', 'startTimeEpochInMillis'], axis=1, inplace=True)
         df = df['candles'].apply(pd.Series)
         df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
+        df['EMA_7'] = df['close'].ewm(span=7, adjust=False).mean()
 
-    close_price = df.iloc[len(df)-1]['open']
+    open_price = df.iloc[len(df)-1]['open']
+    ema_price = df.iloc[len(df)-1]['EMA_7']
+    if(open_price >= ema_price):
+        Global.SYMBOL_SETTINGS[symbol]["TREND"] = "CE"
+        trend = "CE"
+    if(open_price < ema_price):
+        Global.SYMBOL_SETTINGS[symbol]["TREND"] = "PE"
+        trend = "PE"
 
     del response, json_data, df
 
@@ -67,13 +69,13 @@ def set_config(symbol, trend):
     else:
         increment = 50
 
-    if close_price is None:
+    if open_price is None:
         raise BotException("Current close_price is none in get_atm_strike")
 
     if trend == "PE":
-        rounded_strike = int(((close_price + increment -1) // increment) * increment)
+        rounded_strike = int(((open_price + increment -1) // increment) * increment)
     elif trend == "CE":
-        rounded_strike = int((close_price // increment) * increment)
+        rounded_strike = int((open_price // increment) * increment)
 
     option_info = DhanMethods.find_matching_security_ids(rounded_strike, trend, symbol)
     Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = option_info[0]
@@ -99,13 +101,13 @@ def set_config(symbol, trend):
     
     send_telegram_message("Option ID: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"])
 
-def trade_symbol(symbol, trend):
+def trade_symbol(symbol):
     try:
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
         start_time = end_time - datetime.timedelta(days=0)
-        start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        start_time = start_time.replace(hour=9, minute=30, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
         
@@ -133,7 +135,7 @@ def trade_symbol(symbol, trend):
         ohlc_open = ohlc.iloc[last_index]['open']
         prev_close = ohlc.iloc[last_index-1]['close']
         prev_open = ohlc.iloc[last_index-1]['open']
-        if trend == "CE":
+        if Global.SYMBOL_SETTINGS[symbol]["TREND"] == "CE":
             take_position = "CALL" 
         else:
             take_position = "PUT"
@@ -146,8 +148,7 @@ def trade_symbol(symbol, trend):
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
                 DhanMethods.place_order(symbol, take_position, BUY)
-                print("Buy: "+str(Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"]))
-                write_to_log(symbol,symbol+" Entry: "+ str(Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]))
+                send_telegram_message(symbol+": Enter: "+str(ohlc_open))
 
         #Exit Position
         if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
@@ -157,21 +158,19 @@ def trade_symbol(symbol, trend):
                 DhanMethods.place_order(symbol, take_position, SELL)
                 profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
                 Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] += profit_loss
-                write_to_log(symbol,symbol+" Exit: "+str(ohlc_open)+", P/L: "+str(int(profit_loss)))
+                send_telegram_message(symbol+": Exit: "+str(ohlc_open)+"PL: "+profit_loss)
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
 
     except Exception as e:
         send_telegram_message("Error in trade symbol: "+str(e))
         raise BotException("Error in trade symbol: "+str(e))
 
-def exit_open_trade(symbol, trend):
-    if trend == "CE":
+def exit_open_trade(symbol):
+    if Global.SYMBOL_SETTINGS[symbol]["TREND"] == "CE":
         take_position = "CALL" 
     else:
         take_position = "PUT"
     Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"] = None
-    send_telegram_message(symbol+" "+trend+" Daily P/L: " +str(Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"]))
-    write_to_log(symbol, symbol+" Daily P/L: "+str(Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"]))
     Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] = None
 
     if(Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True):

@@ -135,16 +135,14 @@ def place_order(symbol, optionType, transaction_type):
     }
 
     current_date = datetime.now().strftime("%Y-%m-%d")
-    log_file_name = f"{LOGS_FOLDER}/{symbol}-{current_date}.log"
-    log_entry = "Req: "+symbol+" "+transaction_type+" "+str(Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID'])+"\n"  
+    log_file_name = f"{LOGS_FOLDER}/{current_date}.log"
+    log_entry = str(datetime.now())+"\nReq: "+symbol+" "+transaction_type+" "+str(Global.SYMBOL_SETTINGS[symbol]['CURR_SECURITYID'])+"\n"  
     
     try:
         if Global.DHAN_TOKEN != "":
             response = requests.post(DHAN_API_URL, headers=headers, json=data)
             log_entry += "Res: "+str(response)+"\n"
             del response
-        else:
-            print("Skipping place order")
     except Exception as e:
         log_entry += "Res_error: "+str(e)+"\n"
         print("Error in Place order: "+str(e))
