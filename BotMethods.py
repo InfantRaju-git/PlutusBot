@@ -31,7 +31,7 @@ def set_config(symbol):
     start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
     start_time_in_millis = int(start_time.timestamp() * 1000)
     end_time_in_millis = int(end_time.timestamp() * 1000)
-    open_price = None
+    close_price = None
 
     url = 'https://groww.in/v1/api/charting_service/v4/chart/exchange/NSE/segment/CASH/'+symbol
     params = {
@@ -53,12 +53,12 @@ def set_config(symbol):
         df.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
         df['EMA_7'] = df['close'].ewm(span=7, adjust=False).mean()
 
-    open_price = df.iloc[len(df)-1]['open']
+    close_price = df.iloc[len(df)-1]['close']
     ema_price = df.iloc[len(df)-1]['EMA_7']
-    if(open_price >= ema_price):
+    if(close_price >= ema_price):
         Global.SYMBOL_SETTINGS[symbol]["TREND"] = "CE"
         trend = "CE"
-    if(open_price < ema_price):
+    if(close_price < ema_price):
         Global.SYMBOL_SETTINGS[symbol]["TREND"] = "PE"
         trend = "PE"
 
@@ -69,13 +69,13 @@ def set_config(symbol):
     else:
         increment = 50
 
-    if open_price is None:
+    if close_price is None:
         raise BotException("Current close_price is none in get_atm_strike")
 
     if trend == "PE":
-        rounded_strike = int(((open_price + increment -1) // increment) * increment)
+        rounded_strike = int(((close_price + increment -1) // increment) * increment)
     elif trend == "CE":
-        rounded_strike = int((open_price // increment) * increment)
+        rounded_strike = int((close_price // increment) * increment)
 
     option_info = DhanMethods.find_matching_security_ids(rounded_strike, trend, symbol)
     Global.SYMBOL_SETTINGS[symbol]["CURR_SECURITYID"] = option_info[0]
@@ -106,8 +106,8 @@ def trade_symbol(symbol):
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
-        start_time = end_time - datetime.timedelta(days=0)
-        start_time = start_time.replace(hour=9, minute=30, second=0, microsecond=0)
+        start_time = end_time - datetime.timedelta(days=6)
+        start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
         
@@ -127,14 +127,14 @@ def trade_symbol(symbol):
         df.drop(['changeValue', 'changePerc', 'closingPrice', 'startTimeEpochInMillis'], axis=1, inplace=True)
         ohlc = df['candles'].apply(pd.Series)
         ohlc.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        ohlc.drop(['volume'], axis=1, inplace=True)
+        ohlc['EMA_6'] = ohlc['close'].ewm(span=6, adjust=False).mean()
 
         del response, json_data, df
 
         last_index = len(ohlc)-1
         ohlc_open = ohlc.iloc[last_index]['open']
         prev_close = ohlc.iloc[last_index-1]['close']
-        prev_open = ohlc.iloc[last_index-1]['open']
+        ohlc_ema = ohlc.iloc[last_index-1]['EMA_6']
         if Global.SYMBOL_SETTINGS[symbol]["TREND"] == "CE":
             take_position = "CALL" 
         else:
@@ -142,7 +142,7 @@ def trade_symbol(symbol):
 
         del ohlc
 
-        if prev_close > prev_open and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"]: #CE Entry
+        if prev_close > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
 
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
@@ -153,7 +153,7 @@ def trade_symbol(symbol):
         #Exit Position
         if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
             
-            if prev_close < prev_open or ohlc_open <= (Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]-Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"]) or ohlc_open >= (Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]+Global.SYMBOL_SETTINGS[symbol]["TAKE_PROFIT"]):
+            if prev_close < ohlc_ema or ohlc_open <= (Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]-Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"]) or ohlc_open >= (Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]+Global.SYMBOL_SETTINGS[symbol]["TAKE_PROFIT"]):
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 DhanMethods.place_order(symbol, take_position, SELL)
                 profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]

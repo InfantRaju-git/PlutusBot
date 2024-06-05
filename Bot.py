@@ -10,14 +10,14 @@ def run_trade_bot(symbol):
     print("Running on: "+ symbol)
 
     # Define the trading hours
-    start_time = datetime.time(9, 30)
+    start_time = datetime.time(9, 20)
     end_time = datetime.time(15, 30)
 
-    print("Security Extraction Job: 9:25:00")
-    schedule.every().day.at(datetime.time(9, 25, 00).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
+    print("Security Extraction Job: 9:12:00")
+    schedule.every().day.at(datetime.time(9, 12, 00).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
     
-    print("Set Config Job: 9:29:00")
-    schedule.every().day.at(datetime.time(9, 29, 0).strftime("%H:%M:%S")).do(BotMethods.set_config, symbol=symbol).tag('config')
+    print("Set Config Job: 9:18:00")
+    schedule.every().day.at(datetime.time(9, 18, 0).strftime("%H:%M:%S")).do(BotMethods.set_config, symbol=symbol).tag('config')
 
     for hour in range(start_time.hour, end_time.hour + 1):
         for minute in range(0, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
