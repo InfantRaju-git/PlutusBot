@@ -134,6 +134,7 @@ def trade_symbol(symbol):
         last_index = len(ohlc)-1
         ohlc_open = ohlc.iloc[last_index]['open']
         prev_close = ohlc.iloc[last_index-1]['close']
+        prev_open = ohlc.iloc[last_index-1]['open']
         ohlc_ema = ohlc.iloc[last_index-1]['EMA_6']
         if Global.SYMBOL_SETTINGS[symbol]["TREND"] == "CE":
             take_position = "CALL" 
@@ -142,7 +143,7 @@ def trade_symbol(symbol):
 
         del ohlc
 
-        if prev_close > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
+        if prev_close > prev_open and prev_close > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
 
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
@@ -158,7 +159,7 @@ def trade_symbol(symbol):
                 DhanMethods.place_order(symbol, take_position, SELL)
                 profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
                 Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] += profit_loss
-                send_telegram_message(symbol+": Exit: "+str(ohlc_open)+"PL: "+profit_loss)
+                send_telegram_message(symbol+": Exit: "+str(ohlc_open)+"PL: "+str(profit_loss))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
 
     except Exception as e:

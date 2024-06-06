@@ -141,17 +141,13 @@ def place_order(symbol, optionType, transaction_type):
     try:
         if Global.DHAN_TOKEN != "":
             response = requests.post(DHAN_API_URL, headers=headers, json=data)
-            log_entry += "Res: "+str(response)+"\n"
+            log_entry += "Res: "+str(response)
             del response
     except Exception as e:
-        log_entry += "Res_error: "+str(e)+"\n"
+        log_entry += "Res_error: "+str(e)
         print("Error in Place order: "+str(e))
 
     with open(log_file_name, "a") as log_file:
         log_file.write(log_entry)
 
     del data
-
-#response = place_order("NIFTY")
-#filter_and_save_csv()
-#print(find_matching_security_ids(22250, "CE", "NIFTY"))
