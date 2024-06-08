@@ -102,6 +102,8 @@ def set_config(symbol):
     send_telegram_message("Option ID: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"])
 
 def trade_symbol(symbol):
+    if(Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"] is None):
+        set_config(symbol)
     try:
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
@@ -142,6 +144,7 @@ def trade_symbol(symbol):
             take_position = "PUT"
 
         del ohlc
+        print(symbol+": "+str(dt.now())+": "+str(prev_open)+", "+str(prev_close)+", "+str(ohlc_ema)) #to debug
 
         if prev_close > prev_open and prev_close > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
 
