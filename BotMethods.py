@@ -102,14 +102,13 @@ def set_config(symbol):
     send_telegram_message("Option ID: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"])
 
 def trade_symbol(symbol):
-    if(Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"] is None):
-        set_config(symbol)
+    set_config(symbol)
     try:
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
-        start_time = end_time - datetime.timedelta(days=6)
-        start_time = start_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        start_time = end_time - datetime.timedelta(days=7)
+        #start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
         
@@ -136,6 +135,7 @@ def trade_symbol(symbol):
         last_index = len(ohlc)-1
         ohlc_open = ohlc.iloc[last_index]['open']
         prev_close = ohlc.iloc[last_index-1]['close']
+        prev_high = ohlc.iloc[last_index-1]['high']
         prev_open = ohlc.iloc[last_index-1]['open']
         ohlc_ema = ohlc.iloc[last_index-1]['EMA_6']
         if Global.SYMBOL_SETTINGS[symbol]["TREND"] == "CE":
@@ -146,7 +146,7 @@ def trade_symbol(symbol):
         del ohlc
         print(symbol+": "+str(dt.now())+": "+str(prev_open)+", "+str(prev_close)+", "+str(ohlc_ema)) #to debug
 
-        if prev_close > prev_open and prev_close > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
+        if prev_close - prev_open > 5 and prev_high > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
 
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True

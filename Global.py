@@ -16,7 +16,7 @@ SYMBOL_SETTINGS = {
         "ENTRY_PRICE": None,
         "TREND": None,
         "DAILY_PL": 0,
-        "TRADE_TF": 30,
+        "TRADE_TF": 60,
         "DAILY_PL_LIMIT": 20,
         "STOP_LOSS": 5,
         "TAKE_PROFIT": 5
@@ -28,7 +28,7 @@ SYMBOL_SETTINGS = {
         "ENTRY_PRICE": None,
         "TREND": None,
         "DAILY_PL": 0,
-        "TRADE_TF": 30,
+        "TRADE_TF": 60,
         "DAILY_PL_LIMIT": 20,
         "STOP_LOSS": 5,
         "TAKE_PROFIT": 5
@@ -40,7 +40,7 @@ SYMBOL_SETTINGS = {
         "ENTRY_PRICE": None,
         "TREND": None,
         "DAILY_PL": 0,
-        "TRADE_TF": 30,
+        "TRADE_TF": 60,
         "DAILY_PL_LIMIT": 20,
         "STOP_LOSS": 5,
         "TAKE_PROFIT": 5

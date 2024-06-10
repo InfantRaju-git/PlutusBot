@@ -13,16 +13,13 @@ def run_trade_bot(symbol):
     start_time = datetime.time(9, 15)
     end_time = datetime.time(15, 30)
 
-    print("Security Extraction Job: 9:40:00")
-    schedule.every().day.at(datetime.time(9, 40, 00).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
+    print("Security Extraction Job: 10:00:00")
+    schedule.every().day.at(datetime.time(10, 00, 00).strftime("%H:%M:%S")).do(DhanMethods.filter_and_save_csv).tag('securityid')
     
-    print("Set Config Job: 9:42:00")
-    schedule.every().day.at(datetime.time(9, 42, 0).strftime("%H:%M:%S")).do(BotMethods.set_config, symbol=symbol).tag('config')
-
     jobCount = 0
     for hour in range(start_time.hour, end_time.hour + 1):
         for minute in range(start_time.minute, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
-            schedule_time = datetime.time(hour, minute, 10)
+            schedule_time = datetime.time(hour, minute, 5)
             if start_time <= schedule_time < end_time:
                 if jobCount != 0:
                     print("Scheduling Trade Job", schedule_time)
