@@ -16,10 +16,11 @@ SYMBOL_SETTINGS = {
         "ENTRY_PRICE": None,
         "TREND": None,
         "DAILY_PL": 0,
-        "TRADE_TF": 60,
-        "DAILY_PL_LIMIT": 20,
-        "STOP_LOSS": 5,
-        "TAKE_PROFIT": 5
+        "TRADE_TF": 3,
+        "DAILY_PL_LIMIT": 10,
+        "COUNTLOSSTRADE": 0,
+        "CANTRADE": True,
+        "STOP_LOSS": None
     },
     "FINNIFTY": {
         "OPTION_ID": None,
@@ -28,10 +29,11 @@ SYMBOL_SETTINGS = {
         "ENTRY_PRICE": None,
         "TREND": None,
         "DAILY_PL": 0,
-        "TRADE_TF": 60,
-        "DAILY_PL_LIMIT": 20,
-        "STOP_LOSS": 5,
-        "TAKE_PROFIT": 5
+        "TRADE_TF": 3,
+        "DAILY_PL_LIMIT": 10,
+        "COUNTLOSSTRADE": 0,
+        "CANTRADE": True,
+        "STOP_LOSS": None
     },
     "BANKNIFTY": {
         "OPTION_ID": None,
@@ -40,9 +42,10 @@ SYMBOL_SETTINGS = {
         "ENTRY_PRICE": None,
         "TREND": None,
         "DAILY_PL": 0,
-        "TRADE_TF": 60,
-        "DAILY_PL_LIMIT": 20,
-        "STOP_LOSS": 5,
-        "TAKE_PROFIT": 5
+        "TRADE_TF": 3,
+        "DAILY_PL_LIMIT": 15,
+        "COUNTLOSSTRADE": 0,
+        "CANTRADE": True,
+        "STOP_LOSS": None
     }
 }

@@ -1,12 +1,10 @@
 from datetime import datetime as dt
 import datetime
-from dateutil.rrule import rrule, WEEKLY
 import requests
 import pandas as pd
 import time
 import Global
 import DhanMethods
-from ta.trend import PSARIndicator
 
 BUY = "BUY"
 SELL = "SELL"
@@ -102,12 +100,13 @@ def set_config(symbol):
     send_telegram_message("Option ID: "+Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"])
 
 def trade_symbol(symbol):
-    set_config(symbol)
+    if(Global.SYMBOL_SETTINGS[symbol]["OPTION_ID"] is None):
+        set_config(symbol)
     try:
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
-        start_time = end_time - datetime.timedelta(days=7)
+        start_time = end_time - datetime.timedelta(days=5)
         start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
@@ -128,15 +127,19 @@ def trade_symbol(symbol):
         df.drop(['changeValue', 'changePerc', 'closingPrice', 'startTimeEpochInMillis'], axis=1, inplace=True)
         ohlc = df['candles'].apply(pd.Series)
         ohlc.columns = ['timestamp', 'open', 'high', 'low', 'close', 'volume']
-        ohlc['EMA_6'] = ohlc['close'].ewm(span=6, adjust=False).mean()
+        ohlc['EMA_9'] = ohlc['close'].ewm(span=9, adjust=False).mean()
 
         del response, json_data, df
 
         last_index = len(ohlc)-1
+        ohlc_tf = ohlc.iloc[last_index]['timestamp']
         ohlc_open = ohlc.iloc[last_index]['open']
+        ohlc_close = ohlc.iloc[last_index]['close']
+        prev_low = ohlc.iloc[last_index]['low']
         prev_close = ohlc.iloc[last_index-1]['close']
         prev_open = ohlc.iloc[last_index-1]['open']
-        ohlc_ema = ohlc.iloc[last_index-1]['EMA_6']
+        ohlc_ema = ohlc.iloc[last_index-1]['EMA_9']
+        start_time = False
         if Global.SYMBOL_SETTINGS[symbol]["TREND"] == "CE":
             take_position = "CALL" 
         else:
@@ -145,24 +148,40 @@ def trade_symbol(symbol):
         del ohlc
         print(symbol+": "+str(dt.now())+": "+str(prev_open)+", "+str(prev_close)+", "+str(ohlc_ema)) #to debug
 
-        if prev_close > prev_open and prev_close > ohlc_ema and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] < Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"] and Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] > -10: #CE Entry
+        if datetime.datetime.fromtimestamp(ohlc_tf).hour >= 9 and datetime.datetime.fromtimestamp(ohlc_tf).minute >= 45:
+            start_time = True
+
+        if Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] <= -10 or Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] >= Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"]:
+            start_time = False
+
+        if prev_close > prev_open and prev_close > ohlc_ema and start_time and Global.SYMBOL_SETTINGS[symbol]["CANTRADE"] == True and Global.SYMBOL_SETTINGS[symbol]["COUNTLOSSTRADE"] < 2: #CE Entry
 
             if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = True
-                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_open
+                Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = ohlc_close
+                Global.SYMBOL_SETTINGS[symbol]["CANTRADE"] = False
+                Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"] = prev_open
                 DhanMethods.place_order(symbol, take_position, BUY)
-                send_telegram_message(symbol+": Enter: "+str(ohlc_open))
+                send_telegram_message(symbol+": Enter: "+str(ohlc_close))
 
         #Exit Position
         if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
             
-            if prev_close < ohlc_ema or ohlc_open <= (Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]-Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"]) or ohlc_open >= (Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]+Global.SYMBOL_SETTINGS[symbol]["TAKE_PROFIT"]):
+            if prev_close < ohlc_ema or ohlc_open < Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"]:
                 Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] = False
                 DhanMethods.place_order(symbol, take_position, SELL)
-                profit_loss = ohlc_open - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
+                profit_loss = ohlc_close - Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"]
+                if profit_loss < 0:
+                    Global.SYMBOL_SETTINGS[symbol]["COUNTLOSSTRADE"] += 1
                 Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] += profit_loss
-                send_telegram_message(symbol+": Exit: "+str(ohlc_open)+"PL: "+str(profit_loss))
+                send_telegram_message(symbol+": Exit: "+str(ohlc_close)+"PL: "+str(profit_loss))
                 Global.SYMBOL_SETTINGS[symbol]["ENTRY_PRICE"] = None
+
+        if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
+            Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"] = max(Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"],ohlc_open)
+        
+        if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == False and Global.SYMBOL_SETTINGS[symbol]["CANTRADE"] == False and prev_low < ohlc_ema:
+            Global.SYMBOL_SETTINGS[symbol]["CANTRADE"] = True
 
     except Exception as e:
         send_telegram_message("Error in trade symbol: "+str(e))
