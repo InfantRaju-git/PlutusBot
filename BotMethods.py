@@ -135,7 +135,7 @@ def trade_symbol(symbol):
         ohlc_tf = ohlc.iloc[last_index]['timestamp']
         ohlc_open = ohlc.iloc[last_index]['open']
         ohlc_close = ohlc.iloc[last_index]['close']
-        prev_low = ohlc.iloc[last_index]['low']
+        prev_low = ohlc.iloc[last_index-1]['low']
         prev_close = ohlc.iloc[last_index-1]['close']
         prev_open = ohlc.iloc[last_index-1]['open']
         ohlc_ema = ohlc.iloc[last_index-1]['EMA_9']
