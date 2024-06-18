@@ -10,7 +10,7 @@ def run_trade_bot(symbol):
     print("Running on: "+ symbol)
 
     # Define the trading hours
-    start_time = datetime.time(9, 15)
+    start_time = datetime.time(9, 45)
     end_time = datetime.time(15, 30)
 
     print("Security Extraction Job: 9:35:00")
@@ -20,7 +20,7 @@ def run_trade_bot(symbol):
     schedule.every().day.at(datetime.time(9, 42, 00).strftime("%H:%M:%S")).do(BotMethods.set_config, symbol=symbol).tag('setConfig')
     
     for hour in range(start_time.hour, end_time.hour + 1):
-        for minute in range(start_time.minute, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
+        for minute in range(0, 60, Global.SYMBOL_SETTINGS[symbol]["TRADE_TF"]):
             schedule_time = datetime.time(hour, minute, 5)
             if start_time <= schedule_time < end_time:
                 print("Scheduling Trade Job", schedule_time)

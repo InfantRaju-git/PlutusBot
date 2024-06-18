@@ -147,9 +147,6 @@ def trade_symbol(symbol):
 
         del ohlc
 
-        if datetime.datetime.fromtimestamp(ohlc_tf).hour >= 9 and datetime.datetime.fromtimestamp(ohlc_tf).minute >= 45:
-            start_time = True
-
         if Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] <= -10 or Global.SYMBOL_SETTINGS[symbol]["DAILY_PL"] >= Global.SYMBOL_SETTINGS[symbol]["DAILY_PL_LIMIT"]:
             start_time = False
 
