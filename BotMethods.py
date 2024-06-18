@@ -106,8 +106,8 @@ def trade_symbol(symbol):
         end_time_in_millis = int(time.time() * 1000)
         end_time = datetime.datetime.fromtimestamp(end_time_in_millis / 1000)
 
-        start_time = end_time - datetime.timedelta(days=5)
-        start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_time = end_time - datetime.timedelta(days=14)
+        start_time = start_time.replace(hour=9, minute=15, second=0, microsecond=0)
         start_time_in_millis = int(start_time.timestamp() * 1000)
         end_time_in_millis = int(end_time.timestamp() * 1000)
         
@@ -146,7 +146,6 @@ def trade_symbol(symbol):
             take_position = "PUT"
 
         del ohlc
-        print(symbol+": "+str(dt.now())+": "+str(prev_open)+", "+str(prev_close)+", "+str(ohlc_ema)) #to debug
 
         if datetime.datetime.fromtimestamp(ohlc_tf).hour >= 9 and datetime.datetime.fromtimestamp(ohlc_tf).minute >= 45:
             start_time = True
@@ -163,6 +162,7 @@ def trade_symbol(symbol):
                 Global.SYMBOL_SETTINGS[symbol]["STOP_LOSS"] = prev_open
                 DhanMethods.place_order(symbol, take_position, BUY)
                 send_telegram_message(symbol+": Enter: "+str(ohlc_close))
+                print(symbol+": "+str(dt.now())+": "+str(prev_open)+", "+str(prev_close)+", "+str(ohlc_ema)) #to debug
 
         #Exit Position
         if Global.SYMBOL_SETTINGS[symbol]["OPEN_POSITION"] == True:
