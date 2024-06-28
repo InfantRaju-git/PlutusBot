@@ -125,7 +125,7 @@
             const totalToInvest = capitalToInvest * 5;
 
             // Total quantity - based on total to invest and entry price, rounded to the nearest integer
-            const totalQuantity = Math.round(totalToInvest / entryPrice);
+            const totalQuantity = Math.floor(totalToInvest / entryPrice);
 
             // Stop loss - 2.5% risk amount on capital to invest based on entry price
             const stopLoss = entryPrice - (capitalToInvest * 0.025 / totalQuantity);
@@ -134,7 +134,7 @@
             const takeProfit = entryPrice + (capitalToInvest * 0.05 / totalQuantity);
 
             // Margin used - 0.05% per day for the margin used on total to invest
-            const marginUsed = totalToInvest * 0.0005 * daysConsumed;
+            const marginUsed = (totalToInvest-capitalToInvest) * 0.0005 * daysConsumed;
 
             document.getElementById('capitalToInvest').innerText = `Capital to Invest: ${capitalToInvest.toFixed(2)}`;
             document.getElementById('totalToInvest').innerText = `Total to Invest: ${totalToInvest.toFixed(2)}`;
