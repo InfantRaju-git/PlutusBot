@@ -2,30 +2,97 @@
 <html>
 <head>
     <title>Investment Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #555;
+        }
+        input[type="number"],
+        input[type="date"] {
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .result p {
+            margin: 10px 0;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
-    <h1>Investment Calculator</h1>
-    <label for="capital">Capital in Hand:</label>
-    <input type="number" id="capital" name="capital"><br><br>
+    <div class="container">
+        <h1>Investment Calculator</h1>
+        <label for="capital">Capital in Hand:</label>
+        <input type="number" id="capital" name="capital"><br><br>
 
-    <label for="entryPrice">Entry Price:</label>
-    <input type="number" id="entryPrice" name="entryPrice"><br><br>
+        <label for="entryPrice">Entry Price:</label>
+        <input type="number" id="entryPrice" name="entryPrice"><br><br>
 
-    <label for="startDate">Start Date:</label>
-    <input type="date" id="startDate" name="startDate"><br><br>
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" name="startDate"><br><br>
 
-    <label for="endDate">End Date:</label>
-    <input type="date" id="endDate" name="endDate"><br><br>
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" name="endDate"><br><br>
 
-    <button onclick="calculate()">Calculate</button>
+        <button onclick="calculate()">Calculate</button>
 
-    <h2>Results</h2>
-    <p id="capitalToInvest"></p>
-    <p id="totalToInvest"></p>
-    <p id="totalQuantity"></p>
-    <p id="stopLoss"></p>
-    <p id="takeProfit"></p>
-    <p id="marginUsed"></p>
+        <div class="result">
+            <h2>Results</h2>
+            <p id="capitalToInvest"></p>
+            <p id="totalToInvest"></p>
+            <p id="totalQuantity"></p>
+            <p id="stopLoss"></p>
+            <p id="takeProfit"></p>
+            <p id="marginUsed"></p>
+        </div>
+    </div>
 
     <script>
         function calculate() {
@@ -35,7 +102,7 @@
             const endDate = new Date(document.getElementById('endDate').value);
 
             if (isNaN(capital) || isNaN(entryPrice) || capital <= 0 || entryPrice <= 0) {
-                alert("Please enter valid positive numbers for both capital in hand and entry price.");
+                alert("Please enter valid positive numbers for both fields.");
                 return;
             }
 
@@ -57,21 +124,21 @@
             // Total to invest - 5x of capital to invest
             const totalToInvest = capitalToInvest * 5;
 
-            // Total quantity - based on total to invest and entry price
-            const totalQuantity = totalToInvest / entryPrice;
+            // Total quantity - based on total to invest and entry price, rounded to the nearest integer
+            const totalQuantity = Math.round(totalToInvest / entryPrice);
 
-            // Stop loss - 2.5% risk amount on total to invest based on entry price
-            const stopLoss = entryPrice - (totalToInvest * 0.025 / totalQuantity);
+            // Stop loss - 2.5% risk amount on capital to invest based on entry price
+            const stopLoss = entryPrice - (capitalToInvest * 0.025 / totalQuantity);
 
-            // Take profit price - 5% profit level on total to invest amount
-            const takeProfit = entryPrice + (totalToInvest * 0.05 / totalQuantity);
+            // Take profit price - 5% profit level on capital to invest amount
+            const takeProfit = entryPrice + (capitalToInvest * 0.05 / totalQuantity);
 
             // Margin used - 0.05% per day for the margin used on total to invest
             const marginUsed = totalToInvest * 0.0005 * daysConsumed;
 
             document.getElementById('capitalToInvest').innerText = `Capital to Invest: ${capitalToInvest.toFixed(2)}`;
             document.getElementById('totalToInvest').innerText = `Total to Invest: ${totalToInvest.toFixed(2)}`;
-            document.getElementById('totalQuantity').innerText = `Total Quantity: ${totalQuantity.toFixed(2)}`;
+            document.getElementById('totalQuantity').innerText = `Total Quantity: ${totalQuantity}`;
             document.getElementById('stopLoss').innerText = `Stop Loss: ${stopLoss.toFixed(2)}`;
             document.getElementById('takeProfit').innerText = `Take Profit Price: ${takeProfit.toFixed(2)}`;
             document.getElementById('marginUsed').innerText = `Margin Used: ${marginUsed.toFixed(2)}`;
